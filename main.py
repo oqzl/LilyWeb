@@ -42,17 +42,37 @@ async def generate_pdf(
     # ユーザーの入力値をもとに LilyPond ソースを生成
     final_source = f'''\\version "2.24.1"
 
+#(ly:set-option 'point-and-click #f)
+#(set-global-staff-size 17)
+
+\paper {{
+    ragged-bottom = ##t
+    ragged-last-bottom = ##t
+    ragged-last = ##f
+    indent = #15
+    line-width = #180
+    top-margin = #15
+    bottom-margin = #20
+    system-system-spacing.basic-distance = #13
+    top-system-spacing.basic-distance = #15
+    last-bottom-spacing.basic-distance = #10
+    top-margin-spacing.basic-distance = #20
+    markup-system-spacing.basic-distance = #20
+    print-page-number = ##f
+}}
+
 \\header {{
   title = "{title}"
   composer = "{composer}"
-{arranger_line}}}
+{arranger_line}
+  tagline = "Generate by LilyWeb https://lilyweb.onrender.com/"
+}}
 
 score_body = {{
   \\new Staff \\with {{
     instrumentName = "{part_name}"
   }} {{
     \\clef {clef}
-    \\key {key_signature} \\major
     \\relative c {{
       {ly_source}
     }}
@@ -62,18 +82,6 @@ score_body = {{
 \\score {{
   \\score_body
   \\layout {{
-    indent = 0\\mm
-    % タイトル部分などの表示をスタイリッシュに調整
-    \\context {{
-      \\Score
-      \\override TitleText.font = "Helvetica Bold"
-      \\override TitleText.font-size = #24
-      \\override TitleText.line-spacing = #1.2
-      \\override ComposerText.font = "Helvetica"
-      \\override ComposerText.font-size = #14
-      \\override ArrangerText.font = "Helvetica"
-      \\override ArrangerText.font-size = #14
-    }}
   }}
 }}
 '''
