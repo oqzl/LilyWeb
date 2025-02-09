@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LilyPond PDF Generator</title>
+  <style>
+    /* ベースの設定 */
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    /* ヘッダー部分のスタイル */
+    header {
+      background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+      color: #fff;
+      padding: 30px 0;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.8em;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    /* コンテナ */
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: 0 auto 40px;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    /* フォーム内の各要素 */
+    form > div {
+      margin-bottom: 15px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+    button {
+      background-color: #000DFF;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #6B73FF;
+    }
+    /* iframe の調整 */
+    #pdfViewer {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+    /* エラーメッセージ */
+    #message {
+      color: red;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LilyPond PDF Generator</h1>
+  </header>
+  <div class="container">
+    <form id="lyForm">
+      <!-- 曲名、作曲者、編曲者、パート名 -->
+      <div>
+        <input type="text" name="title" id="title" placeholder="曲名" required>
+      </div>
+      <div>
+        <input type="text" name="composer" id="composer" placeholder="作曲者" required>
+      </div>
+      <div>
+        <input type="text" name="arranger" id="arranger" placeholder="編曲者（任意）">
+      </div>
+      <div>
+        <input type="text" name="part_name" id="part_name" placeholder="パート名" required>
+      </div>
+      <!-- 音部記号のプルダウン -->
+      <div>
+        <label for="clef">音部記号:</label>
+        <select name="clef" id="clef" required>
+          <option value="bass">Bass</option>
+          <option value="treble">Treble</option>
+        </select>
+      </div>
+      <!-- 調性指定のプルダウン -->
+      <div>
+        <label for="key_signature">調性:</label>
+        <select name="key_signature" id="key_signature" required>
+          <option value="c">C (0 accidentals)</option>
+          <option value="g">G (1♯)</option>
+          <option value="d">D (2♯)</option>
+          <option value="a">A (3♯)</option>
+          <option value="e">E (4♯)</option>
+          <option value="b">B (5♯)</option>
+          <option value="f#">F# (6♯)</option>
+          <option value="c#">C# (7♯)</option>
+          <option value="f">F (1♭)</option>
+          <option value="bb">Bb (2♭)</option>
+          <option value="eb">Eb (3♭)</option>
+          <option value="ab">Ab (4♭)</option>
+          <option value="db">Db (5♭)</option>
+          <option value="gb">Gb (6♭)</option>
+          <option value="cb">Cb (7♭)</option>
+        </select>
+      </div>
+      <!-- 楽譜の内容 -->
+      <div>
+        <textarea name="ly_source" id="ly_source" rows="15" placeholder="ここに楽譜の内容を入力" required>% ここに楽譜の音符を入力してください
+c4 d e f | g a b c |</textarea>
+      </div>
+      <button type="submit">PDFを生成</button>
+    </form>
+    <div id="message"></div>
+    <iframe id="pdfViewer" style="display:none;"></iframe>
+  </div>
+  <script>
+    document.getElementById("lyForm").addEventListener("submit", function(event) {
+      event.preventDefault(); // ページリロード防止
+
+      // フォーム内の全ての入力項目の値を FormData にまとめる
+      const formData = new FormData(this);
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "";
+
+      fetch("/generate", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => { throw new Error(text); });
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        // Blob URL を生成して iframe に設定
+        const url = window.URL.createObjectURL(blob);
+        const pdfViewer = document.getElementById("pdfViewer");
+        pdfViewer.style.display = "block";
+        pdfViewer.src = url;
+      })
+      .catch(error => {
+        messageDiv.textContent = "エラー: " + error.message;
+      });
+    });
+  </script>
+</body>
+</html>
